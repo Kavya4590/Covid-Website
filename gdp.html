@@ -73,7 +73,41 @@
           <div class="card-body">
             <div class="row">
               <div class="col-sm-5" id="cardWidth">
-                <h5 class="card-title">GDP</h5>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="inlinecheckfield"
+                    id="gdpCheck"
+                    value="gdp_growth"
+                    checked
+                  />
+                  <label class="form-check-label" for="gdpCheck">GDP</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="inlinecheckfield"
+                    id="stringencyCheck"
+                    value="stringency_index"
+                  />
+                  <label class="form-check-label" for="stringencyCheck"
+                    >Stringency Index</label
+                  >
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="inlinecheckfield"
+                    id="handwashCheck"
+                    value="handwashing_facilities"
+                  />
+                  <label class="form-check-label" for="handwashCheck"
+                    >Handwashing Facilities</label
+                  >
+                </div>
                 <!-- <div class="card-text" id="gdpLineChart"></div> -->
                 <div id="groupbar-chart"></div>
               </div>

@@ -19,6 +19,8 @@ const loadData = async () => {
         total_deaths: +d.total_deaths,
         total_deaths_per_million: +d.total_deaths_per_million,
         total_vaccinations: +d.total_vaccinations,
+        stringency_index: +d.stringency_index,
+        handwashing_facilities: +d.handwashing_facilities,
         year: timeFormatYear(parseDate),
       };
     });

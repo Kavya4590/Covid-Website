@@ -116,7 +116,7 @@ function createMapChart(data) {
         .attr("r", (d) => {
           const data = dataById[d.id] || { total_cases: 0, total_deaths: 0 };
           return (
-            Math.sqrt(data[metric]) * (metric === "total_cases" ? 0.001 : 0.01)
+            Math.sqrt(data[metric]) * (metric === "total_cases" ? 0.003 : 0.01)
           );
         })
         .attr(

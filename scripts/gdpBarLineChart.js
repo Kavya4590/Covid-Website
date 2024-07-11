@@ -39,7 +39,16 @@ function BarLineChart(data, gdpData, selectedCountry) {
     .attr("font-size", "20px")
     .attr("text-anchor", "middle")
     .attr("transform", `translate(${width}, ${height / 2})rotate(90)`)
-    .text("GDP Count");
+    .text(
+      `${
+        $("input[name='inlinecheckfield']:checked").val() === "gdp_growth"
+          ? "GDP"
+          : $("input[name='inlinecheckfield']:checked").val() ===
+            "stringency_index"
+          ? "Stringency"
+          : "Handwashing Facilities"
+      } Count`
+    );
 
   const x = d3
     .scaleBand()
@@ -79,12 +88,21 @@ function BarLineChart(data, gdpData, selectedCountry) {
   const formatDate = d3.timeFormat("%Y");
 
   $("#allLocationDropdown").change(function () {
-    update(data, $(this).val());
+    update(
+      data,
+      $(this).val(),
+      $("input[name='inlinecheckfield']:checked").val()
+    );
   });
 
-  update(data, selectedCountry);
+  $("input[name='inlinecheckfield']").change(function () {
+    const selectedGroup = $(this).val();
+    update(data, $("#allLocationDropdown").val(), selectedGroup);
+  });
 
-  function update(oData, selectedCountry) {
+  update(data, selectedCountry, "gdp_growth");
+
+  function update(oData, selectedCountry, selectedGroup) {
     const years = d3.range(2015, 2025).map((d) => d.toString());
 
     const filteredData = oData
@@ -100,10 +118,18 @@ function BarLineChart(data, gdpData, selectedCountry) {
     const filterGDPData = gdpData.filter((d) => d.location === selectedCountry);
 
     const dataMap = Object.values(filteredData).map(
-      ({ year, total_deaths, total_cases }) => ({
+      ({
         year,
         total_deaths,
         total_cases,
+        stringency_index,
+        handwashing_facilities,
+      }) => ({
+        year,
+        total_deaths,
+        total_cases,
+        stringency_index,
+        handwashing_facilities,
       })
     );
 
@@ -113,6 +139,8 @@ function BarLineChart(data, gdpData, selectedCountry) {
         year,
         total_deaths: record.total_deaths || 0,
         total_cases: record.total_cases || 0,
+        stringency_index: record.stringency_index || 0,
+        handwashing_facilities: record.handwashing_facilities || 0,
         gdp_growth: parseFloat(filterGDPData[0][`${year} [YR${year}]`]) || 0,
       };
     });
@@ -121,7 +149,7 @@ function BarLineChart(data, gdpData, selectedCountry) {
 
     x.domain(data.map((d) => d.year));
     y.domain([1, d3.max(data, (d) => Math.max(d.total_cases, d.total_deaths))]);
-    y2.domain(d3.extent(data, (d) => d.gdp_growth));
+    y2.domain(d3.extent(data, (d) => d[selectedGroup]));
 
     const xSubgroup = d3
       .scaleBand()
@@ -200,7 +228,7 @@ function BarLineChart(data, gdpData, selectedCountry) {
     const line = d3
       .line()
       .x((d) => x(d.year) + x.bandwidth() / 2)
-      .y((d) => y2(d.gdp_growth));
+      .y((d) => y2(d[selectedGroup]));
 
     const path = g.selectAll(".path").data([data]);
     path.exit().remove();
@@ -218,7 +246,7 @@ function BarLineChart(data, gdpData, selectedCountry) {
 
     const mouseoverCircle = function (event, d) {
       tooltip
-        .html(`<b>Year</b>: ${d.year}<br/> <b>GDP</b>: ${d.gdp_growth}`)
+        .html(`<b>Year</b>: ${d.year}<br/> <b>GDP</b>: ${d[selectedGroup]}`)
         .style("opacity", 1);
     };
 
@@ -231,13 +259,13 @@ function BarLineChart(data, gdpData, selectedCountry) {
       .attr("fill", "#2c982c")
       .attr("r", 5)
       .attr("cx", (d) => x(d.year) + x.bandwidth() / 2)
-      .attr("cy", (d) => y2(d.gdp_growth))
+      .attr("cy", (d) => y2(d[selectedGroup]))
       .merge(circles)
       .on("mouseover", mouseoverCircle)
       .on("mousemove", mousemove)
       .on("mouseleave", mouseleave)
       .transition(t)
       .attr("cx", (d) => x(d.year) + x.bandwidth() / 2)
-      .attr("cy", (d) => y2(d.gdp_growth));
+      .attr("cy", (d) => y2(d[selectedGroup]));
   }
 }
