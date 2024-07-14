@@ -20,35 +20,35 @@ function BarLineChart(data, gdpData, selectedCountry) {
     .attr("class", "x axis-label")
     .attr("x", width / 2)
     .attr("y", height + 45)
-    .attr("font-size", "20px")
+    .attr("font-size", "16px")
     .attr("text-anchor", "middle")
-    .text("Cases / Deaths");
+    .text("Years");
 
   // y label
   g.append("text")
     .attr("class", "y axis-label")
     .attr("x", -(height / 2))
     .attr("y", -50)
-    .attr("font-size", "20px")
+    .attr("font-size", "16px")
     .attr("text-anchor", "middle")
     .attr("transform", "rotate(-90)")
-    .text("Count");
+    .text("Cases and Deaths Count");
 
-  g.append("text")
+  const y2Label = g.append("text")
     .attr("class", "y axis-label")
-    .attr("font-size", "20px")
+    .attr("font-size", "16px")
     .attr("text-anchor", "middle")
-    .attr("transform", `translate(${width}, ${height / 2})rotate(90)`)
-    .text(
-      `${
-        $("input[name='inlinecheckfield']:checked").val() === "gdp_growth"
-          ? "GDP"
-          : $("input[name='inlinecheckfield']:checked").val() ===
-            "stringency_index"
-          ? "Stringency"
-          : "Handwashing Facilities"
-      } Count`
-    );
+    .attr("transform", `translate(${width+ 6}, ${height / 2})rotate(90)`)
+    // .text(
+    //   `${
+    //     $("input[name='inlinecheckfield']:checked").val() === "gdp_growth"
+    //       ? "GDP Rate"
+    //       : $("input[name='inlinecheckfield']:checked").val() ===
+    //         "stringency_index"
+    //       ? "Stringency"
+    //       : "Handwashing Facilities"
+    //   } Count`
+    // );
 
   const x = d3
     .scaleBand()
@@ -103,45 +103,45 @@ function BarLineChart(data, gdpData, selectedCountry) {
   update(data, selectedCountry, "gdp_growth");
 
   function update(oData, selectedCountry, selectedGroup) {
-    const years = d3.range(2015, 2025).map((d) => d.toString());
-
+    
     const filteredData = oData
-      .filter((d) => d.location === selectedCountry)
-      .reduce((acc, curr) => {
-        const year = curr.year;
-        if (!acc[year] || new Date(curr.date) > new Date(acc[year].date)) {
-          acc[year] = curr;
-        }
-        return acc;
-      }, {});
-
+    .filter((d) => d.location === selectedCountry)
+    .reduce((acc, curr) => {
+      const year = curr.year;
+      if (!acc[year] || new Date(curr.date) > new Date(acc[year].date)) {
+        acc[year] = curr;
+      }
+      return acc;
+    }, {});
+    
     const filterGDPData = gdpData.filter((d) => d.location === selectedCountry);
-
+    
     const dataMap = Object.values(filteredData).map(
       ({
         year,
         total_deaths,
         total_cases,
         stringency_index,
-        handwashing_facilities,
+        // handwashing_facilities,
       }) => ({
         year,
         total_deaths,
         total_cases,
         stringency_index,
-        handwashing_facilities,
-      })
-    );
-
+        // handwashing_facilities,
+      }));
+    
+    // const years = selectedGroup === "gdp_growth"? d3.range(2015, 2025).map((d) => d.toString()): dataMap.map(d => d.year);
+    const years = d3.range(2015, 2025).map((d) => d.toString())
     const data = years.map((year) => {
       const record = dataMap.find((d) => d.year === year) || {};
       return {
         year,
         total_deaths: record.total_deaths || 0,
         total_cases: record.total_cases || 0,
-        stringency_index: record.stringency_index || 0,
-        handwashing_facilities: record.handwashing_facilities || 0,
-        gdp_growth: parseFloat(filterGDPData[0][`${year} [YR${year}]`]) || 0,
+        stringency_index: record.stringency_index || null,
+        // handwashing_facilities: record.handwashing_facilities || 0,
+        gdp_growth: parseFloat(filterGDPData[0][`${year} [YR${year}]`]) || null,
       };
     });
 
@@ -158,7 +158,8 @@ function BarLineChart(data, gdpData, selectedCountry) {
       .paddingInner(0.2)
       .paddingOuter(0);
 
-    const t = d3.transition().duration(750);
+    const t = d3.transition().duration(500);
+    const tc = d3.transition().duration(750);
 
     const xAxisCall = d3.axisBottom(x);
     xaxisGroup.transition(t).call(xAxisCall);
@@ -222,17 +223,19 @@ function BarLineChart(data, gdpData, selectedCountry) {
       .on("mousemove", mousemove)
       .on("mouseleave", mouseleave)
       .transition(t)
-      .attr("y", (d) => y(d.value))
-      .attr("height", (d) => height - y(d.value));
+      .attr("y", (d) => d.value > 0 ? y(d.value) : y(1))
+      .attr("height", (d) => d.value > 0 ? height - y(d.value) : 0);
+
+    const filteredLineData = data.filter(d => d[selectedGroup] !== null)
 
     const line = d3
       .line()
       .x((d) => x(d.year) + x.bandwidth() / 2)
       .y((d) => y2(d[selectedGroup]));
 
-    const path = g.selectAll(".path").data([data]);
+    const path = g.selectAll(".path").data([filteredLineData]);
     path.exit().remove();
-    path.transition(t).attr("d", line);
+    path.transition(tc).attr("d", line);
     path
       .enter()
       .append("path")
@@ -242,16 +245,20 @@ function BarLineChart(data, gdpData, selectedCountry) {
       .attr("stroke-miterlimit", 1)
       .attr("stroke-width", 3)
       .attr("d", line)
-      .transition(t);
+      // .transition(tc);
 
     const mouseoverCircle = function (event, d) {
       tooltip
-        .html(`<b>Year</b>: ${d.year}<br/> <b>GDP</b>: ${d[selectedGroup]}`)
+        .html(`<b>Year</b>: ${d.year}<br/> <b>${$("input[name='inlinecheckfield']:checked").val() === "gdp_growth" ? "GDP Rate": "Government Saftey Measures"}</b>: ${d[selectedGroup]}`)
         .style("opacity", 1);
     };
 
-    const circles = g.selectAll(".dots").data(data);
+    const circles = g.selectAll(".dots").data(filteredLineData);
     circles.exit().remove();
+    circles
+      .transition(tc)
+      .attr("cx", (d) => x(d.year) + x.bandwidth() / 2)
+      .attr("cy", (d) => y2(d[selectedGroup]));
     circles
       .enter()
       .append("circle")
@@ -260,12 +267,18 @@ function BarLineChart(data, gdpData, selectedCountry) {
       .attr("r", 5)
       .attr("cx", (d) => x(d.year) + x.bandwidth() / 2)
       .attr("cy", (d) => y2(d[selectedGroup]))
-      .merge(circles)
+      // .merge(circles)
       .on("mouseover", mouseoverCircle)
       .on("mousemove", mousemove)
       .on("mouseleave", mouseleave)
-      .transition(t)
-      .attr("cx", (d) => x(d.year) + x.bandwidth() / 2)
-      .attr("cy", (d) => y2(d[selectedGroup]));
+      // .transition(tc)
+      // .attr("cx", (d) => x(d.year) + x.bandwidth() / 2)
+      // .attr("cy", (d) => y2(d[selectedGroup]));
+
+      y2Label.text(`${
+        selectedGroup === "gdp_growth"
+          ? "GDP Rate"
+          : "Government Saftey Measures"  
+      }`)
   }
 }
