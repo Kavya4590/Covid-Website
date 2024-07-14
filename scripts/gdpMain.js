@@ -2,6 +2,7 @@ let employeeData = [];
 let unemployeeData = [];
 let gdpData = [];
 let dataLoaded = false;
+$('#loader').show();
 
 let covidData = [];
 
@@ -96,7 +97,8 @@ $(document).ready(async function () {
   await loadDataUnEmpolyee();
   await loadData();
   await loadDataGDP();
-  console.log(gdpData);
+  $('#loader').hide();
+  // console.log(gdpData);
   const data = [...employeeData, ...unemployeeData];
   BarLineChart(covidData, gdpData, "United States");
   EmployeeLinePieChart(data);
