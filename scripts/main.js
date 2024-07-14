@@ -1,8 +1,10 @@
 let covidData = [];
 let dataLoaded = false;
+$('#loader').show();
 
 const loadData = async () => {
   try {
+    $('#loader').show();
     covidData = await d3.csv("data/owid-covid-data.csv", (d) => {
       return {
         ...d,
@@ -17,6 +19,7 @@ const loadData = async () => {
       };
     });
     dataLoaded = true;
+    $('#loader').hide();
     // console.log("Data loaded successfully:", covidData);
     $(document).trigger("dataLoaded"); // Trigger an event when data is loaded
   } catch (error) {
